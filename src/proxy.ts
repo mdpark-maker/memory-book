@@ -14,10 +14,12 @@ export function proxy(request: NextRequest) {
     pathname === '/home' ||
     pathname.startsWith('/home/')
 
-  // Lightweight check: session cookie exists (actual verification happens in layouts)
-  const hasSession = request.cookies.getAll().some(
-    (c) => c.name.startsWith('sb-') && c.name.includes('-auth-token')
-  )
+  // Lightweight check: session cookie for this specific project exists
+  // Cookie name format: sb-<projectRef>-auth-token (or .0, .1 for chunked)
+  const projectRef = process.env.NEXT_PUBLIC_SUPABASE_URL!.split('//')[1].split('.')[0]
+  const hasSession =
+    request.cookies.has(`sb-${projectRef}-auth-token`) ||
+    request.cookies.has(`sb-${projectRef}-auth-token.0`)
 
   if (isProtected && !hasSession) {
     return NextResponse.redirect(new URL('/login', request.url))
